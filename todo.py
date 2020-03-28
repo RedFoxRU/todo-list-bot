@@ -1,14 +1,14 @@
 import sqlite3
-
+import os
 import requests
 import telebot
 from telebot import types
-
+from bs4 import BeautifulSoup as BS
 from telebot import apihelper
 
 LINE = "=" * 22
 
-
+tocken = os.environ.get("BOT_TOKEN")
 SELECT = "SELECT {cl} FROM {tb} WHERE {wCL}={wVL};"
 INSERT = "INSERT INTO {tb} ({cls}) VALUES ({vls})"
 UPDATE = "UPDATE {tb} SET {st}=? WHERE {wCL}={wVL}"
@@ -67,8 +67,7 @@ cursor.execute(
 
 conn.commit()
 
-TOKEN = "832468199:AAHZEWRuJOkryzZ8EsWDJdCSYi03Y3mSjVg"
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(token)
 
 cmds = telebot.types.ReplyKeyboardMarkup()
 cmds.row("📒 Создать лист", "📝 Создать задачу")
@@ -384,33 +383,39 @@ def text(msg):
                 msg.chat.id,
                 "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
             )
-    elif cmd == "✅ Отметить задачу выполненой":
-        cursor.execute(
-            "SELECT `thisPrjct` FROM `Users` WHERE `telegram-id`=?", (msg.chat.id,)
-        )
-        prjct = cursor.fetchone()[0]
-        cursor.execute(
-            "SELECT `id`, `title`, `checked` FROM `Tasks` WHERE `Todo-list-id` = ?",
-            (prjct,),
-        )
-        markup = types.InlineKeyboardMarkup()
-        tasks = cursor.fetchall()
+    elif cmd == "✅ Отметить задачу выполненной":
+        try:
+            cursor.execute(
+                "SELECT `thisPrjct` FROM `Users` WHERE `telegram-id`=?", (msg.chat.id,)
+            )
+            cursor.execute(
+                "SELECT `id`, `title`, `checked` FROM `Tasks` WHERE `Todo-list-id` = ?",
+                cursor.fetchone(),
+            )
+            markup = types.InlineKeyboardMarkup()
+            tasks = cursor.fetchall()
 
-        tmp = []
-        i = 0
-        for task in tasks:
-            if task[2] == False:
-                markup.row(
-                    types.InlineKeyboardButton(
-                        text="❌" + task[1], callback_data="checkedTask_" + str(task[0]),
+            tmp = []
+            i = 0
+            for task in tasks:
+                if task[2] == False:
+                    markup.row(
+                        types.InlineKeyboardButton(
+                            text="❌" + task[1],
+                            callback_data="checkedTask_" + str(task[0]),
+                        )
                     )
-                )
-            else:
-                markup.row
-                (types.InlineKeyboardButton(text="✅" + task[1]))
-        bot.send_message(
-            msg.chat.id, "Пожалуйста выберите задачу.", reply_markup=markup
-        )
+                else:
+                    markup.row
+                    (types.InlineKeyboardButton(text="✅" + task[1]))
+            bot.send_message(
+                msg.chat.id, "Пожалуйста выберите задачу.", reply_markup=markup
+            )
+        except:
+            bot.send_message(
+                msg.chat.id,
+                "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+            )
 
     elif cmd == "📜 Просмотреть все задачи":
         try:
@@ -438,7 +443,7 @@ def text(msg):
                     + text
                 )
             bot.send_message(msg.chat.id, text)
-        except telebot.apihelper.ApiException as err:
+        except:
             bot.send_message(
                 msg.chat.id,
                 "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
