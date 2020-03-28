@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "database": "${workspaceFolder}/mydatabase.db",
+            "dialect": "SQLite",
+            "name": "telegram-Manager"
+        },
+        {
+            "database": "${workspaceFolder}/todo.db",
+            "dialect": "SQLite",
+            "name": "`11"
+        }
+    ],
+    "python.formatting.provider": "black"
+}
