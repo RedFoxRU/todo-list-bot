@@ -4,11 +4,11 @@ import requests
 import telebot
 from telebot import types
 from telebot import apihelper
+import asyncio
 
 LINE = "=" * 22
 
 token = os.environ.get("BOT_TOKEN")
-
 SELECT = "SELECT {cl} FROM {tb} WHERE {wCL}={wVL};"
 INSERT = "INSERT INTO {tb} ({cls}) VALUES ({vls})"
 UPDATE = "UPDATE {tb} SET {st}=? WHERE {wCL}={wVL}"
@@ -77,7 +77,7 @@ cmds.row("⚙️ Настроить выбранный лист")
 
 
 @bot.message_handler(commands=["help", "start"])
-def startMSG(msg):
+async def startMSG(msg):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
 
@@ -119,7 +119,7 @@ def startMSG(msg):
         )
 
 
-def createList(msg):
+async def createList(msg):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
 
@@ -147,7 +147,7 @@ def createList(msg):
     )
 
 
-def insertReport(msg):
+async def insertReport(msg):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
     id = msg.chat.id
@@ -159,7 +159,7 @@ def insertReport(msg):
 
 
 @bot.callback_query_handler(func=lambda msg: True)
-def queryHandler(msg):
+async def queryHandler(msg):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
     id = msg.message.chat.id
@@ -280,7 +280,7 @@ def queryHandler(msg):
         bot.register_next_step_handler_by_chat_id(id, insertReport)
 
 
-def createTask(msg, prjct):
+async def createTask(msg, prjct):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
     cursor.execute(
@@ -301,7 +301,7 @@ def createTask(msg, prjct):
     )
 
 
-def changeList(msg):
+async def changeList(msg):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
     cursor.execute(
@@ -315,7 +315,7 @@ def changeList(msg):
 
 
 @bot.message_handler(content_types=["text"])
-def text(msg):
+async def text(msg):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
 
