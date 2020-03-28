@@ -3,7 +3,6 @@ import os
 import requests
 import telebot
 from telebot import types
-from bs4 import BeautifulSoup as BS
 from telebot import apihelper
 
 LINE = "=" * 22
