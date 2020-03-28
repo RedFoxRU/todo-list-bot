@@ -7,7 +7,8 @@ from telebot import apihelper
 
 LINE = "=" * 22
 
-tocken = os.environ.get("BOT_TOKEN")
+token = os.environ.get("BOT_TOKEN")
+
 SELECT = "SELECT {cl} FROM {tb} WHERE {wCL}={wVL};"
 INSERT = "INSERT INTO {tb} ({cls}) VALUES ({vls})"
 UPDATE = "UPDATE {tb} SET {st}=? WHERE {wCL}={wVL}"
