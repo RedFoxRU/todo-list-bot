@@ -1,3 +1,0 @@
-PySocks==1.6.8
-pyTelegramBotAPI==3.6.7
-googletrans
