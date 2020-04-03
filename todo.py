@@ -377,7 +377,11 @@ def changeList(msg):
             "Вы успешно выбрали проект " + msg.text + ".",
             dest=msg.from_user.language_code,
         ).text,
+<<<<<<< HEAD
         reply_markup=cmds(msg.from_user.language_code),
+=======
+        reply_markup=cmds,
+>>>>>>> a146b579551d7d00d7e40f6b4a6f8a1953e878ce
     )
 
 
@@ -668,4 +672,5 @@ def text(msg):
 print(LINE)
 print("Bot have been started!")
 print(LINE)
+
 bot.polling()
