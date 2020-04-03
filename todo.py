@@ -1,14 +1,16 @@
-import sqlite3
 import os
+import sqlite3
+
 import requests
 import telebot
-from telebot import types
-from bs4 import BeautifulSoup as BS
-from telebot import apihelper
+from googletrans import Translator
+from telebot import apihelper, types
 
 LINE = "=" * 22
 
-tocken = os.environ.get("BOT_TOKEN")
+translator = Translator()
+
+token = os.environ.get("BOT_TOKEN")
 SELECT = "SELECT {cl} FROM {tb} WHERE {wCL}={wVL};"
 INSERT = "INSERT INTO {tb} ({cls}) VALUES ({vls})"
 UPDATE = "UPDATE {tb} SET {st}=? WHERE {wCL}={wVL}"
@@ -69,11 +71,23 @@ conn.commit()
 
 bot = telebot.TeleBot(token)
 
-cmds = telebot.types.ReplyKeyboardMarkup()
-cmds.row("📒 Создать лист", "📝 Создать задачу")
-cmds.row("⇄ Сменить выбранный лист", "✅ Отметить задачу выполненой")
-cmds.row("📜 Просмотреть все задачи", "💰 Поблагодарить")
-cmds.row("⚙️ Настроить выбранный лист")
+
+def cmds(dest):
+    cmds = types.ReplyKeyboardMarkup()
+    cmds.row(
+        "📒 " + translator.translate("Создать лист", dest=dest).text,
+        "📝 " + translator.translate("Создать задачу", dest=dest).text,
+    )
+    cmds.row(
+        "⇄ " + translator.translate("Сменить выбранный лист", dest=dest).text,
+        "✅ " + translator.translate("Отметить задачу выполненой", dest=dest).text,
+    )
+    cmds.row(
+        "📜 " + translator.translate("Просмотреть все задачи", dest=dest).text,
+        "💰 " + translator.translate("Поблагодарить", dest=dest).text,
+    )
+    cmds.row("⚙️ " + translator.translate("Настроить выбранный лист", dest=dest).text)
+    return cmds
 
 
 @bot.message_handler(commands=["help", "start"])
@@ -102,20 +116,26 @@ def startMSG(msg):
         conn.commit()
         bot.send_message(
             msg.chat.id,
-            """
+            translator.translate(
+                """
         Привет, мой друг!\n Вот вам немного моих команд:\n\n
         "📒 Создать лист" - создает новый список дел.\n
         "✏️ Создать задачу" - создает задачу в списке дел.\n
     """,
+                dest=msg.from_user.language_code,
+            ).text,
             parse_mode="Markdown",
-            reply_markup=cmds,
+            reply_markup=cmds(msg.from_user.language_code),
         )
     else:
         bot.send_message(
             msg.chat.id,
-            "Хей! Почему давно не было новостей от тебя?",
+            translator.translate(
+                "Хей! Почему давно не было новостей от тебя?",
+                dest=msg.from_user.language_code,
+            ).text,
             parse_mode="Markdown",
-            reply_markup=cmds,
+            reply_markup=cmds(msg.from_user.language_code),
         )
 
 
@@ -141,9 +161,12 @@ def createList(msg):
     conn.commit()
     bot.send_message(
         msg.chat.id,
-        "Лист "
-        + msg.text
-        + ' был создан успешно.\n Теперь чтобы взаимодействовать с ним, вам необходимо его выбрать.\nДля этого выберите в меню пункт "Сменить выбранный лист"',
+        translator.translate(
+            "Лист "
+            + msg.text
+            + ' был создан успешно.\n Теперь чтобы взаимодействовать с ним, вам необходимо его выбрать.\nДля этого выберите в меню пункт "Сменить выбранный лист"',
+            dest=msg.from_user.language_code,
+        ).text,
     )
 
 
@@ -155,7 +178,12 @@ def insertReport(msg):
         "INSERT INTO `Reports` (`telegram-id`, `text`) VALUES(?,?);", (id, msg.text)
     )
     conn.commit()
-    bot.send_message(id, "Ваш отчет об ошибке был отправлен.")
+    bot.send_message(
+        id,
+        translator.translate(
+            "Ваш отчет об ошибке был отправлен.", dest=msg.from_user.language_code,
+        ).text,
+    )
 
 
 @bot.callback_query_handler(func=lambda msg: True)
@@ -176,14 +204,22 @@ def queryHandler(msg):
         bot.edit_message_text(
             chat_id=id,
             message_id=msg.message.message_id,
-            text='Задача **"{}"** была успешно отмечена выполненной.'.format(
-                cursor.fetchone()[0]
-            ),
+            text=translator.translate(
+                'Задача **"{}"** была успешно отмечена выполненной.'.format(
+                    cursor.fetchone()[0]
+                ),
+                dest=msg.message.from_user.language_code,
+            ).text,
             parse_mode="Markdown",
         )
     elif msg.data.split("_")[0] == "mainMenu":
+        bot.clear_step_handler_by_chat_id(id)
         bot.edit_message_text(
-            chat_id=id, message_id=msg.message.message_id, text="Вы в главном меню."
+            chat_id=id,
+            message_id=msg.message.message_id,
+            text=translator.translate(
+                "Вы в главном меню.", dest=msg.message.from_user.language_code,
+            ).text,
         )
 
     elif msg.data.split("_")[0] == "deleteList":
@@ -194,7 +230,12 @@ def queryHandler(msg):
             markup = types.InlineKeyboardMarkup()
             tasks = cursor.fetchall()
             markup.row(
-                types.InlineKeyboardButton("Главное меню", callback_data="mainMenu_")
+                types.InlineKeyboardButton(
+                    translator.translate(
+                        "Главное меню", dest=msg.message.from_user.language_code,
+                    ).text,
+                    callback_data="mainMenu_",
+                )
             )
             for task in tasks:
                 markup.row(
@@ -205,7 +246,10 @@ def queryHandler(msg):
             bot.edit_message_text(
                 chat_id=id,
                 message_id=msg.message.message_id,
-                text="Пожалуйста выберите задачу для удаления или выйдите в главное меню:",
+                text=translator.translate(
+                    "Пожалуйста выберите задачу для удаления или выйдите в главное меню:",
+                    dest=msg.message.from_user.language_code,
+                ).text,
             )
             bot.edit_message_reply_markup(
                 id, message_id=msg.message.message_id, reply_markup=markup
@@ -221,7 +265,10 @@ def queryHandler(msg):
             bot.edit_message_text(
                 chat_id=id,
                 message_id=msg.message.message_id,
-                text="Todo-list был удаленн удачно.",
+                text=translator.translate(
+                    "Todo-list был удаленн удачно.",
+                    dest=msg.message.from_user.language_code,
+                ).text,
             )
     elif msg.data.split("_")[0] == "deleteTask":
         if msg.data.split("_")[1] == "STEP0":
@@ -255,7 +302,10 @@ def queryHandler(msg):
             bot.edit_message_text(
                 chat_id=id,
                 message_id=msg.message.message_id,
-                text="Пожалуйста выберите задачу для удаления или выйдите в главное меню:",
+                text=translator.translate(
+                    "Пожалуйста выберите задачу для удаления или выйдите в главное меню:",
+                    dest=msg.message.from_user.language_code,
+                ).text,
             )
             bot.edit_message_reply_markup(
                 id, message_id=msg.message.message_id, reply_markup=markup
@@ -270,13 +320,22 @@ def queryHandler(msg):
             bot.edit_message_text(
                 chat_id=id,
                 message_id=msg.message.message_id,
-                text="Задача была удаленна удачно.",
+                text=translator.translate(
+                    "Задача была удаленна удачно.",
+                    dest=msg.message.from_user.language_code,
+                ).text,
             )
     elif msg.data.split("_")[0] == "report":
         bot.edit_message_reply_markup(
             id, message_id=msg.message.message_id, reply_markup=""
         )
-        bot.send_message(id, "Отправьте мне ваш отчет об ошибках.🦠")
+        bot.send_message(
+            id,
+            translator.translate(
+                "Отправьте мне ваш отчет об ошибках.🦠",
+                dest=msg.message.from_user.language_code,
+            ).text,
+        )
         bot.register_next_step_handler_by_chat_id(id, insertReport)
 
 
@@ -296,7 +355,10 @@ def createTask(msg, prjct):
     conn.commit()
     bot.send_message(
         msg.chat.id,
-        'Вы успешно создали задачу **"{}"**.'.format(msg.text),
+        translator.translate(
+            'Вы успешно создали задачу **"{}"**.'.format(msg.text),
+            dest=msg.from_user.language_code,
+        ).text,
         parse_mode="Markdown",
     )
 
@@ -310,7 +372,12 @@ def changeList(msg):
     )
     conn.commit()
     bot.send_message(
-        msg.chat.id, "Вы успешно выбрали проект " + msg.text + ".", reply_markup=cmds
+        msg.chat.id,
+        translator.translate(
+            "Вы успешно выбрали проект " + msg.text + ".",
+            dest=msg.from_user.language_code,
+        ).text,
+        reply_markup=cmds(msg.from_user.language_code),
     )
 
 
@@ -321,12 +388,28 @@ def text(msg):
 
     cmd = msg.text
 
-    if cmd == "📒 Создать лист":
-        bot.send_message(msg.chat.id, "Пожалуйста отправь мне название списка.")
+    if (
+        cmd
+        == "📒 "
+        + translator.translate("Создать лист", dest=msg.from_user.language_code,).text
+    ):
+        bot.send_message(
+            msg.chat.id,
+            translator.translate(
+                "Пожалуйста отправь мне название списка.",
+                dest=msg.from_user.language_code,
+            ).text,
+        )
         bot.register_next_step_handler_by_chat_id(
             msg.chat.id, lambda msg: createList(msg)
         )
-    elif cmd == "⇄ Сменить выбранный лист":
+    elif (
+        cmd
+        == "⇄ "
+        + translator.translate(
+            "Сменить выбранный лист", dest=msg.from_user.language_code,
+        ).text
+    ):
         try:
             prjcts = telebot.types.ReplyKeyboardMarkup()
             cursor.execute(
@@ -356,14 +439,27 @@ def text(msg):
             else:
                 prjcts.row(*tmp)
             bot.send_message(
-                msg.chat.id, "Пожалуйста выберите лист.", reply_markup=prjcts
+                msg.chat.id,
+                translator.translate(
+                    "Пожалуйста выберите лист.", dest=msg.from_user.language_code,
+                ).text,
+                reply_markup=prjcts,
             )
             bot.register_next_step_handler_by_chat_id(
                 msg.chat.id, lambda msg: changeList(msg)
             )
         except:
-            bot.send_message(msg.chat.id, "У вас нет Todo-list.")
-    elif cmd == "📝 Создать задачу":
+            bot.send_message(
+                msg.chat.id,
+                translator.translate(
+                    "У вас нет Todo-list.", dest=msg.from_user.language_code,
+                ).text,
+            )
+    elif (
+        cmd
+        == "📝 "
+        + translator.translate("Создать задачу", dest=msg.from_user.language_code,).text
+    ):
         try:
             cursor.execute(
                 "SELECT `thisPrjct` FROM `Users` WHERE `telegram-id`=?", (msg.chat.id,)
@@ -371,9 +467,25 @@ def text(msg):
             prjct = cursor.fetchone()
             cursor.execute("SELECT `title` FROM `Todo-lists` WHERE `id`=?", prjct)
 
+            markup = types.InlineKeyboardMarkup()
+            markup.row(
+                types.InlineKeyboardButton(
+                    translator.translate(
+                        "Главное меню", dest=msg.message.from_user.language_code,
+                    ).text,
+                    callback_data="mainMenu_",
+                )
+            )
+
             bot.send_message(
                 msg.chat.id,
-                'Задача будет создана в списке "{pj}"'.format(pj=cursor.fetchone()[0]),
+                translator.translate(
+                    'Задача будет создана в списке "{pj}"'.format(
+                        pj=cursor.fetchone()[0]
+                    ),
+                    dest=msg.from_user.language_code,
+                ).text,
+                reply_markup=markup,
             )
             bot.register_next_step_handler_by_chat_id(
                 msg.chat.id, lambda msg: createTask(msg, prjct[0])
@@ -381,17 +493,25 @@ def text(msg):
         except:
             bot.send_message(
                 msg.chat.id,
-                "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+                translator.translate(
+                    "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+                    dest=msg.from_user.language_code,
+                ).text,
             )
-    elif cmd == "✅ Отметить задачу выполненой":
+    elif (
+        cmd
+        == "✅ "
+        + translator.translate(
+            "Отметить задачу выполненной", dest=msg.from_user.language_code,
+        ).text
+    ):
         try:
             cursor.execute(
                 "SELECT `thisPrjct` FROM `Users` WHERE `telegram-id`=?", (msg.chat.id,)
             )
-            prjct = cursor.fetchone()[0]
             cursor.execute(
                 "SELECT `id`, `title`, `checked` FROM `Tasks` WHERE `Todo-list-id` = ?",
-                (prjct,),
+                cursor.fetchone(),
             )
             markup = types.InlineKeyboardMarkup()
             tasks = cursor.fetchall()
@@ -410,15 +530,28 @@ def text(msg):
                     markup.row
                     (types.InlineKeyboardButton(text="✅" + task[1]))
             bot.send_message(
-                msg.chat.id, "Пожалуйста выберите задачу.", reply_markup=markup
+                msg.chat.id,
+                translator.translate(
+                    "Пожалуйста выберите задачу.", dest=msg.from_user.language_code,
+                ).text,
+                reply_markup=markup,
             )
         except:
             bot.send_message(
                 msg.chat.id,
-                "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+                translator.translate(
+                    "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+                    dest=msg.from_user.language_code,
+                ).text,
             )
 
-    elif cmd == "📜 Просмотреть все задачи":
+    elif (
+        cmd
+        == "📜 "
+        + translator.translate(
+            "Просмотреть все задачи", dest=msg.from_user.language_code,
+        ).text
+    ):
         try:
             cursor.execute(
                 "SELECT `thisPrjct` FROM `Users` WHERE `telegram-id`=?", (msg.chat.id,)
@@ -439,50 +572,96 @@ def text(msg):
                     f += 1
                     text += "❌ " + str(task[0]) + "\r\n"
             if t > f and f == 0:
-                text = (
+                text = translator.translate(
                     "🎉Хей!🎉\n\rПоздравляем ты выполнил все задачи в этом списке!\n"
-                    + text
-                )
+                    + text,
+                    dest=msg.from_user.language_code,
+                ).text
             bot.send_message(msg.chat.id, text)
         except:
             bot.send_message(
                 msg.chat.id,
-                "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+                translator.translate(
+                    "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+                    dest=msg.from_user.language_code,
+                ).text,
             )
 
-    elif cmd == "💰 Поблагодарить":
+    elif (
+        cmd
+        == "💰 "
+        + translator.translate("Поблагодарить", dest=msg.from_user.language_code,).text
+    ):
         markup = types.InlineKeyboardMarkup()
         markup.row(
             types.InlineKeyboardButton(
-                text="Поддержать", url="https://www.donationalerts.com/r/redfoxbotmaker"
+                text=translator.translate(
+                    "Поддержать", dest=msg.from_user.language_code,
+                ).text,
+                url="https://www.donationalerts.com/r/redfoxbotmaker",
             )
         )
-        bot.send_message(msg.chat.id, "Вот ссылка", reply_markup=markup)
-    elif cmd == "⚙️ Настроить выбранный лист":
+        bot.send_message(
+            msg.chat.id,
+            translator.translate("Вот ссылка", dest=msg.from_user.language_code,).text,
+            reply_markup=markup,
+        )
+    elif (
+        cmd
+        == "⚙️ "
+        + translator.translate(
+            "Настроить выбранный лист", dest=msg.from_user.language_code,
+        ).text
+    ):
 
         markup = types.InlineKeyboardMarkup()
         markup.row(
-            types.InlineKeyboardButton("Главное меню", callback_data="mainMenu_")
+            types.InlineKeyboardButton(
+                translator.translate(
+                    "Главное меню", dest=msg.message.from_user.language_code,
+                ).text,
+                callback_data="mainMenu_",
+            )
         )
         markup.row(
             types.InlineKeyboardButton(
-                "Удалить задачу", callback_data="deleteTask_STEP0"
+                translator.translate(
+                    "Удалить задачу", dest=msg.from_user.language_code,
+                ).text,
+                callback_data="deleteTask_STEP0",
             )
         )
 
         markup.row(
             types.InlineKeyboardButton(
-                "Удалить список", callback_data="deleteList_STEP0"
+                translator.translate(
+                    "Удалить список", dest=msg.from_user.language_code,
+                ).text,
+                callback_data="deleteList_STEP0",
             )
         )
         markup.row(
-            types.InlineKeyboardButton("Отправить отзыв", callback_data="report_")
+            types.InlineKeyboardButton(
+                translator.translate(
+                    "Отправить отзыв", dest=msg.from_user.language_code,
+                ).text,
+                callback_data="report_",
+            )
         )
-        bot.send_message(msg.chat.id, "Все настройки:", reply_markup=markup)
+        bot.send_message(
+            msg.chat.id,
+            translator.translate(
+                "Все настройки:", dest=msg.from_user.language_code,
+            ).text,
+            reply_markup=markup,
+        )
     else:
         bot.send_message(
             msg.chat.id,
-            "📣Хей!📣\nБрат, я не знаю такой команды, чтобы узнать список команд введи /help",
+            translator.translate(
+                "📣Хей!📣\nБрат, я не знаю такой команды, чтобы узнать список команд введи /help",
+                dest=msg.from_user.language_code,
+            ).text,
         )
 
 

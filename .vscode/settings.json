@@ -11,5 +11,6 @@
             "name": "`11"
         }
     ],
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "python.pythonPath": "/usr/bin/python3.6"
 }
