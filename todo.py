@@ -76,6 +76,7 @@ bot = telebot.TeleBot(token)
 
 def cmds(dest):
     cmds = types.ReplyKeyboardMarkup()
+    print(dest)
     cmds.row(
         "📒 " + translator.translate("Создать лист", dest=dest).text,
         "📝 " + translator.translate("Создать задачу", dest=dest).text,
@@ -167,6 +168,7 @@ def createList(msg):
             "Лист "
             + msg.text
             + ' был создан успешно.\n Теперь чтобы взаимодействовать с ним, вам необходимо его выбрать.\nДля этого выберите в меню пункт "Сменить выбранный лист"',
+            
             dest=msg.from_user.language_code,
         ).text,
     )
