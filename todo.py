@@ -340,6 +340,9 @@ def queryHandler(msg):
 def createTask(msg, prjct):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
+    if msg.text == "Главное меню":
+        bot.send_message(msg.chat.id, "Вы в главном меню!")
+        return
     cursor.execute(
         "INSERT INTO `Tasks` (`Todo-list-id`, `title`, `checked`) VALUES (?,?,?)",
         (prjct, msg.text, False),
@@ -364,6 +367,9 @@ def createTask(msg, prjct):
 def changeList(msg):
     conn = sqlite3.connect("todo.db")
     cursor = conn.cursor()
+    if msg.text == "Главное меню":
+        bot.send_message(msg.chat.id, "Вы в главном меню!")
+        return
     cursor.execute(
         "UPDATE `Users` SET `thisPrjct`=? WHERE `telegram-id`=?",
         (msg.text.split(" ")[0], msg.chat.id),
@@ -424,6 +430,7 @@ def text(msg):
 
             tmp = []
             i = 0
+            prjcts.row("Главное меню")
             for prjct in allprjcts:
 
                 if i != 3:
@@ -436,6 +443,16 @@ def text(msg):
                     i = 0
             else:
                 prjcts.row(*tmp)
+
+            markup = types.InlineKeyboardMarkup()
+            markup.row(
+                types.InlineKeyboardButton(
+                    translator.translate(
+                        "Главное меню", dest=msg.from_user.language_code,
+                    ).text,
+                    callback_data="mainMenu_",
+                )
+            )
             bot.send_message(
                 msg.chat.id,
                 translator.translate(
