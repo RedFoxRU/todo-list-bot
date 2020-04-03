@@ -71,6 +71,8 @@ conn.commit()
 
 bot = telebot.TeleBot(token)
 
+#
+
 
 def cmds(dest):
     cmds = types.ReplyKeyboardMarkup()
