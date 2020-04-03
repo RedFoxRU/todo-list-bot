@@ -668,5 +668,4 @@ def text(msg):
 print(LINE)
 print("Bot have been started!")
 print(LINE)
-
 bot.polling()
