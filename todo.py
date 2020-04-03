@@ -208,7 +208,7 @@ def queryHandler(msg):
                 'Задача **"{}"** была успешно отмечена выполненной.'.format(
                     cursor.fetchone()[0]
                 ),
-                dest=msg.message.from_user.language_code,
+                dest=msg.from_user.language_code,
             ).text,
             parse_mode="Markdown",
         )
@@ -218,7 +218,7 @@ def queryHandler(msg):
             chat_id=id,
             message_id=msg.message.message_id,
             text=translator.translate(
-                "Вы в главном меню.", dest=msg.message.from_user.language_code,
+                "Вы в главном меню.", dest=msg.from_user.language_code,
             ).text,
         )
 
@@ -232,7 +232,7 @@ def queryHandler(msg):
             markup.row(
                 types.InlineKeyboardButton(
                     translator.translate(
-                        "Главное меню", dest=msg.message.from_user.language_code,
+                        "Главное меню", dest=msg.from_user.language_code,
                     ).text,
                     callback_data="mainMenu_",
                 )
@@ -248,7 +248,7 @@ def queryHandler(msg):
                 message_id=msg.message.message_id,
                 text=translator.translate(
                     "Пожалуйста выберите задачу для удаления или выйдите в главное меню:",
-                    dest=msg.message.from_user.language_code,
+                    dest=msg.from_user.language_code,
                 ).text,
             )
             bot.edit_message_reply_markup(
@@ -266,8 +266,7 @@ def queryHandler(msg):
                 chat_id=id,
                 message_id=msg.message.message_id,
                 text=translator.translate(
-                    "Todo-list был удаленн удачно.",
-                    dest=msg.message.from_user.language_code,
+                    "Todo-list был удаленн удачно.", dest=msg.from_user.language_code,
                 ).text,
             )
     elif msg.data.split("_")[0] == "deleteTask":
@@ -304,7 +303,7 @@ def queryHandler(msg):
                 message_id=msg.message.message_id,
                 text=translator.translate(
                     "Пожалуйста выберите задачу для удаления или выйдите в главное меню:",
-                    dest=msg.message.from_user.language_code,
+                    dest=msg.from_user.language_code,
                 ).text,
             )
             bot.edit_message_reply_markup(
@@ -321,8 +320,7 @@ def queryHandler(msg):
                 chat_id=id,
                 message_id=msg.message.message_id,
                 text=translator.translate(
-                    "Задача была удаленна удачно.",
-                    dest=msg.message.from_user.language_code,
+                    "Задача была удаленна удачно.", dest=msg.from_user.language_code,
                 ).text,
             )
     elif msg.data.split("_")[0] == "report":
@@ -333,7 +331,7 @@ def queryHandler(msg):
             id,
             translator.translate(
                 "Отправьте мне ваш отчет об ошибках.🦠",
-                dest=msg.message.from_user.language_code,
+                dest=msg.from_user.language_code,
             ).text,
         )
         bot.register_next_step_handler_by_chat_id(id, insertReport)
@@ -471,7 +469,7 @@ def text(msg):
             markup.row(
                 types.InlineKeyboardButton(
                     translator.translate(
-                        "Главное меню", dest=msg.message.from_user.language_code,
+                        "Главное меню", dest=msg.from_user.language_code,
                     ).text,
                     callback_data="mainMenu_",
                 )
@@ -618,7 +616,7 @@ def text(msg):
         markup.row(
             types.InlineKeyboardButton(
                 translator.translate(
-                    "Главное меню", dest=msg.message.from_user.language_code,
+                    "Главное меню", dest=msg.from_user.language_code,
                 ).text,
                 callback_data="mainMenu_",
             )
