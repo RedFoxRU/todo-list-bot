@@ -184,7 +184,7 @@ def insertReport(msg):
     bot.send_message(
         id,
         translator.translate(
-            "Ваш отчет об ошибке был отправлен.", dest=msg.from_user.language_code,
+            "Ваш отчет об ошибке был отправлен.", dest=msg.from_user.language_code
         ).text,
     )
 
