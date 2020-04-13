@@ -125,9 +125,9 @@ def startMSG(msg):
         "📒 Создать лист" - создает новый список дел.\n
         "✏️ Создать задачу" - создает задачу в списке дел.\n
     """,
-                dest=msg.from_user.language_code,
-                src="ru",
-            ).text,
+dest=msg.from_user.language_code,
+                src="ru"
+            ).text
             parse_mode="Markdown",
             reply_markup=cmds(msg.from_user.language_code),
         )
@@ -136,7 +136,7 @@ def startMSG(msg):
             msg.chat.id,
             translator.translate(
                 "Хей! Почему давно не было новостей от тебя?",
-                dest=msg.from_user.language_code,
+dest=msg.from_user.language_code,
                 src="ru",
             ).text,
             parse_mode="Markdown",
@@ -214,7 +214,7 @@ def queryHandler(msg):
                 'Задача **"{}"** была успешно отмечена выполненной.'.format(
                     cursor.fetchone()[0]
                 ),
-                dest=msg.from_user.language_code,
+dest=msg.from_user.language_code,
                 src="ru",
             ).text,
             parse_mode="Markdown",
@@ -344,7 +344,7 @@ def queryHandler(msg):
             id,
             translator.translate(
                 "Отправьте мне ваш отчет об ошибках.🦠",
-                dest=msg.from_user.language_code,
+dest=msg.from_user.language_code,
                 src="ru",
             ).text,
         )
@@ -419,7 +419,7 @@ def text(msg):
             msg.chat.id,
             translator.translate(
                 "Пожалуйста отправь мне название списка.",
-                dest=msg.from_user.language_code,
+dest=msg.from_user.language_code,
                 src="ru",
             ).text,
         )
@@ -709,7 +709,7 @@ def text(msg):
             msg.chat.id,
             translator.translate(
                 "📣Хей!📣\nБрат, я не знаю такой команды, чтобы узнать список команд введи /help",
-                dest=msg.from_user.language_code,
+dest=msg.from_user.language_code,
                 src="ru",
             ).text,
         )
