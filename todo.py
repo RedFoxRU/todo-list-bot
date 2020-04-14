@@ -119,7 +119,7 @@ def startMSG(msg):
         conn.commit()
         bot.send_message(
             msg.chat.id,
-            translator.translate(
+            text=translator.translate(
                 """
         Привет, мой друг!\n Вот вам немного моих команд:\n\n
         "📒 Создать лист" - создает новый список дел.\n
