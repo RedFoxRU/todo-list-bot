@@ -126,11 +126,9 @@ def startMSG(msg):
         "✏️ Создать задачу" - создает задачу в списке дел.\n
     """,
                 dest=msg.from_user.language_code,
-                src="auto"
-            ).text,
+                src="auto").text,
             parse_mode="Markdown",
-            reply_markup=cmds(msg.from_user.language_code)
-        )
+            reply_markup=cmds(msg.from_user.language_code))
     else:
         bot.send_message(
             msg.chat.id,
