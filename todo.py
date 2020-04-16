@@ -346,7 +346,7 @@ def text(msg):
         bot.send_message(
             msg.chat.id,
             "Пожалуйста отправь мне название списка.",
-            reply_markup=telebot.types.ReplyKeyboardMarkup().row(
+            reply_markup=telebot.types.InlineKeyboardMarkup().row(
                 types.InlineKeyboardButton("Главное меню", callback_data="mainMenu_")
             ),
         )
