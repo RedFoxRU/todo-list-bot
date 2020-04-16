@@ -392,7 +392,8 @@ def text(msg):
             bot.register_next_step_handler_by_chat_id(
                 msg.chat.id, lambda msg: changeList(msg)
             )
-        except:
+        except Exception as er:
+            print(er)
             bot.send_message(msg.chat.id, "У вас нет Todo-list.")
     elif cmd == "📝 " + "Создать задачу":
         try:
