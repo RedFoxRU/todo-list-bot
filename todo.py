@@ -343,13 +343,15 @@ def text(msg):
     cmd = msg.text
 
     if cmd == "📒 " + "Создать лист":
-        bot.send_message(msg.chat.id, "Пожалуйста отправь мне название списка.")
-        bot.register_next_step_handler_by_chat_id(
+        bot.send_message(
             msg.chat.id,
-            lambda msg: createList(msg),
+            "Пожалуйста отправь мне название списка.",
             reply_markup=telebot.types.ReplyKeyboardMarkup().row(
                 types.InlineKeyboardButton("Главное меню", callback_data="mainMenu_")
             ),
+        )
+        bot.register_next_step_handler_by_chat_id(
+            msg.chat.id, lambda msg: createList(msg),
         )
     elif cmd == "⇄ " + "Сменить выбранный лист":
         try:
