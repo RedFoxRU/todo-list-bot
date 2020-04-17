@@ -457,6 +457,12 @@ def text(msg):
                 "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
             )
 
+    elif cmd == "Главное меню":
+        bot.clear_step_handler_by_chat_id(id)
+        bot.edit_message_text(
+            chat_id=id, message_id=msg.message.message_id, text="Вы в главном меню."
+        )
+
     elif cmd == "📜 " + "Просмотреть все задачи":
         try:
             cursor.execute(
