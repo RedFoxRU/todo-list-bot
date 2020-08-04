@@ -10,7 +10,7 @@ LINE = "=" * 22
 
 translator = Translator()
 
-token = os.environ.get("BOT_TOKEN")
+TOKEN = os.environ.get("BOT_TOKEN")
 SELECT = "SELECT {cl} FROM {tb} WHERE {wCL}={wVL};"
 INSERT = "INSERT INTO {tb} ({cls}) VALUES ({vls})"
 UPDATE = "UPDATE {tb} SET {st}=? WHERE {wCL}={wVL}"
@@ -69,14 +69,12 @@ cursor.execute(
 
 conn.commit()
 
-bot = telebot.TeleBot(token)
-
-#
+bot = telebot.TeleBot(TOKEN)
 
 
-def cmds(dest):
+
+def cmds():
     cmd = types.ReplyKeyboardMarkup()
-    print(dest)
     cmd.row("📒 Создать лист", "📝 Создать задачу")
     cmd.row("⇄ " + "Сменить выбранный лист", "✅ " + "Отметить задачу выполненной")
     cmd.row("📜 " + "Просмотреть все задачи", "💰 " + "Поблагодарить")
@@ -94,7 +92,7 @@ def startMSG(msg):
     else:
         name = str(msg.from_user.first_name) + " " + str(msg.from_user.last_name)
     cursor.execute(
-        """
+    """
                 select * from `Users` where `telegram-id`={0}
     """.format(
             msg.from_user.id
@@ -102,8 +100,10 @@ def startMSG(msg):
     )
     if cursor.fetchone() == None:
         cursor.execute(
-            """
-                INSERT INTO `Users` (`telegram-id`,`name`) VALUES (?,?);
+        """
+                INSERT INTO
+                `Users` (`telegram-id`,`name`)
+                VALUES (?,?);
         """,
             (msg.from_user.id, name),
         )
@@ -120,14 +120,14 @@ def startMSG(msg):
         "💰 Поблагодарить" - возможность поблагодарить автора.\n
     """,
             parse_mode="Markdown",
-            reply_markup=cmds(msg.from_user.language_code),
+            reply_markup=cmds(),
         )
     else:
         bot.send_message(
             msg.chat.id,
             "Хей! Почему давно не было новостей от тебя?",
             parse_mode="Markdown",
-            reply_markup=cmds(msg.from_user.language_code),
+            reply_markup=cmds(),
         )
 
 
@@ -169,6 +169,31 @@ def insertReport(msg):
     conn.commit()
     bot.send_message(id, "Ваш отчет об ошибке был отправлен.")
 
+
+def changeList(list_id, chat_id, msg_id):
+    conn = sqlite3.connect("todo.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE `Users` SET `thisPrjct`=? WHERE `telegram-id`=?",
+        (list_id, chat_id),
+    )
+    conn.commit()
+
+    cursor.execute(
+                    "SELECT `title` FROM `Todo-lists` WHERE `id`=?", (list_id,)
+    )
+    list_ = cursor.fetchone()
+    
+    bot.edit_message_reply_markup(
+        chat_id,message_id=msg_id, reply_markup=""
+    )
+    bot.edit_message_text(
+        chat_id=chat_id,
+        message_id = msg_id,
+        text="Вы успешно выбрали проект \"" + list_[0] + "\".",
+        parse_mode='Markdown'
+    )
 
 @bot.callback_query_handler(func=lambda msg: True)
 def queryHandler(msg):
@@ -218,7 +243,7 @@ def queryHandler(msg):
             bot.edit_message_text(
                 chat_id=id,
                 message_id=msg.message.message_id,
-                text="Пожалуйста выберите задачу для удаления или выйдите в главное меню:",
+                text="Пожалуйста выберите список для удаления или выйдите в главное меню:",
             )
             bot.edit_message_reply_markup(
                 id, message_id=msg.message.message_id, reply_markup=markup
@@ -291,6 +316,9 @@ def queryHandler(msg):
         )
         bot.send_message(id, "Отправьте мне ваш отчет об ошибках.🦠")
         bot.register_next_step_handler_by_chat_id(id, insertReport)
+    elif "list_" in msg.data:
+        list_id = msg.data.split("_")[1]
+        changeList(list_id, id, msg.message.message_id)
 
 
 def createTask(msg, prjct):
@@ -317,22 +345,6 @@ def createTask(msg, prjct):
     )
 
 
-def changeList(msg):
-    conn = sqlite3.connect("todo.db")
-    cursor = conn.cursor()
-    if msg.text == "Главное меню":
-        bot.send_message(msg.chat.id, "Вы в главном меню!")
-        return
-    cursor.execute(
-        "UPDATE `Users` SET `thisPrjct`=? WHERE `telegram-id`=?",
-        (msg.text.split(" ")[0], msg.chat.id),
-    )
-    conn.commit()
-    bot.send_message(
-        msg.chat.id,
-        "Вы успешно выбрали проект " + msg.text + ".",
-        reply_markup=cmds(msg.from_user.language_code),
-    )
 
 
 @bot.message_handler(content_types=["text"])
@@ -353,7 +365,7 @@ def text(msg):
         bot.register_next_step_handler_by_chat_id(
             msg.chat.id, lambda msg: createList(msg),
         )
-    elif cmd == "⇄ " + "Сменить выбранный лист":
+    elif cmd == "⇄ Сменить выбранный лист":
         try:
             prjcts = telebot.types.ReplyKeyboardMarkup()
             cursor.execute(
@@ -367,6 +379,7 @@ def text(msg):
                     "SELECT `title` FROM `Todo-lists` WHERE `id`=?", (project,)
                 )
                 allprjcts.append([project, cursor.fetchone()[0]])
+            markup = types.InlineKeyboardMarkup()
 
             tmp = []
             i = 0
@@ -384,15 +397,13 @@ def text(msg):
             else:
                 prjcts.row(*tmp)
 
-            markup = types.InlineKeyboardMarkup()
             markup.row(
                 types.InlineKeyboardButton("Главное меню", callback_data="mainMenu_")
             )
+            for prjct in allprjcts:
+                markup.row(types.InlineKeyboardButton(prjct[1], callback_data="list_"+prjct[0]))
             bot.send_message(
-                msg.chat.id, "Пожалуйста выберите лист.", reply_markup=prjcts
-            )
-            bot.register_next_step_handler_by_chat_id(
-                msg.chat.id, lambda msg: changeList(msg)
+                msg.chat.id, "Пожалуйста выберите лист.", reply_markup=markup
             )
         except Exception as er:
             print(er)
@@ -493,7 +504,7 @@ def text(msg):
         except:
             bot.send_message(
                 msg.chat.id,
-                "Либо в этом списке нет задач, либо вы не выбрали нужный список.",
+                "Либо в этом списке нет задач, либо вы не выбрали нужный вам список.",
             )
 
     elif cmd == "💰 " + "Поблагодарить":
@@ -529,7 +540,7 @@ def text(msg):
     else:
         bot.send_message(
             msg.chat.id,
-            "📣Хей!📣\nБрат, я не знаю такой команды, чтобы узнать список команд введи /help",
+            "📣Хей!📣\nДруг, я не знаю такой команды, чтобы узнать список команд введи /help",
         )
 
 

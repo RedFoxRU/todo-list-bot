@@ -1,2 +1,4 @@
 Procfile
 runtime.txt
+.vscode/settings.json
+todo.db
